@@ -6,7 +6,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace AlgorithmBattleArina.Helpers
+namespace AlgorithmBattleArena.Helpers
 {
     public class AuthHelper
     {
@@ -80,7 +80,13 @@ namespace AlgorithmBattleArina.Helpers
 
             if (userId.HasValue)
             {
-                claims.Add(new Claim(role == "Student" ? "studentId" : "teacherId", userId.ToString()!));
+                string claimType = role switch
+                {
+                    "Student" => "studentId",
+                    "Teacher" => "teacherId",
+                    _ => "userId"
+                };
+                claims.Add(new Claim(claimType, userId.ToString()!));
             }
 
             var tokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKeyValue));

@@ -73,9 +73,7 @@
 }
 ```
 
-**Error Responses:**
-- `401 Unauthorized` - Invalid credentials
-- `401 Unauthorized` - Account has been deactivated
+
 
 ### Refresh Token
 
@@ -477,7 +475,9 @@
   "matchId": 0,
   "problemId": 0,
   "language": "string",
-  "code": "string"
+  "code": "string",
+  "status": "string",
+  "score": 0
 }
 ```
 
@@ -486,6 +486,31 @@
 {
   "submissionId": 0
 }
+```
+
+### Get User Submissions for Match
+
+**Endpoint:** `GET /api/Submissions/match/{matchId}/user`  
+**Authorization:** Bearer Token Required
+
+**Path Parameters:**
+- `matchId` (integer) - Match ID
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "submissionId": 0,
+    "matchId": 0,
+    "problemId": 0,
+    "participantEmail": "string",
+    "language": "string",
+    "code": "string",
+    "status": "string",
+    "score": 0,
+    "submittedAt": "2024-01-01T00:00:00Z"
+  }
+]
 ```
 
 ## Admin
@@ -677,25 +702,569 @@
 ]
 ```
 
-## SignalR Hub
+## Chat
 
-### Hub Endpoint
+### Get Conversations
 
-**URL:** `/lobbyHub` or `/matchHub`  
+**Endpoint:** `GET /api/Chat/conversations`  
 **Authorization:** Bearer Token Required
 
-### Hub Methods
+**Response:** `200 OK`
+```json
+[
+  {
+    "conversationId": 0,
+    "type": "Friend",
+    "referenceId": null,
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z",
+    "participants": ["user1@example.com", "user2@example.com"],
+    "lastMessage": {
+      "messageId": 0,
+      "conversationId": 0,
+      "senderEmail": "string",
+      "senderName": "string",
+      "content": "string",
+      "sentAt": "2024-01-01T00:00:00Z"
+    }
+  }
+]
+```
 
-#### Join Lobby
+### Get Messages
+
+**Endpoint:** `GET /api/Chat/conversations/{conversationId}/messages`  
+**Authorization:** Bearer Token Required (Must be participant)
+
+**Path Parameters:**
+- `conversationId` (integer) - Conversation ID
+
+**Query Parameters:**
+- `pageSize` (integer, optional, default: 50) - Number of messages per page
+- `offset` (integer, optional, default: 0) - Offset for pagination
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "messageId": 0,
+    "conversationId": 0,
+    "senderEmail": "string",
+    "senderName": "string",
+    "content": "string",
+    "sentAt": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+### Send Message
+
+**Endpoint:** `POST /api/Chat/conversations/{conversationId}/messages`  
+**Authorization:** Bearer Token Required (Must be participant)
+
+**Path Parameters:**
+- `conversationId` (integer) - Conversation ID
+
+**Request Body:**
+```json
+{
+  "content": "string"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "messageId": 0
+}
+```
+
+### Create Friend Conversation
+
+**Endpoint:** `POST /api/Chat/conversations/friend`  
+**Authorization:** Bearer Token Required
+
+**Request Body:**
+```json
+{
+  "friendId": 0,
+  "friendEmail": "string"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "conversationId": 0,
+  "type": "Friend",
+  "referenceId": null,
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z",
+  "participants": ["user1@example.com", "user2@example.com"],
+  "lastMessage": null
+}
+```
+
+## Friends
+
+### Get Friends
+
+**Endpoint:** `GET /api/Friends`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "studentId": 0,
+    "fullName": "string",
+    "email": "string",
+    "isOnline": false,
+    "friendsSince": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+### Search Students
+
+**Endpoint:** `GET /api/Friends/search`  
+**Authorization:** Student Only
+
+**Query Parameters:**
+- `query` (string, required) - Search term for student name or email
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "studentId": 0,
+    "fullName": "string",
+    "email": "string",
+    "isOnline": false,
+    "friendsSince": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+### Send Friend Request
+
+**Endpoint:** `POST /api/Friends/request`  
+**Authorization:** Student Only
+
+**Request Body:**
+```json
+{
+  "receiverId": 0
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "requestId": 0,
+  "message": "Friend request sent successfully"
+}
+```
+
+### Get Received Friend Requests
+
+**Endpoint:** `GET /api/Friends/requests/received`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "requestId": 0,
+    "senderId": 0,
+    "receiverId": 0,
+    "senderName": "string",
+    "senderEmail": "string",
+    "receiverName": "string",
+    "receiverEmail": "string",
+    "status": "Pending",
+    "requestedAt": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+### Get Sent Friend Requests
+
+**Endpoint:** `GET /api/Friends/requests/sent`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "requestId": 0,
+    "senderId": 0,
+    "receiverId": 0,
+    "senderName": "string",
+    "senderEmail": "string",
+    "receiverName": "string",
+    "receiverEmail": "string",
+    "status": "Pending",
+    "requestedAt": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+### Accept Friend Request
+
+**Endpoint:** `PUT /api/Friends/requests/{requestId}/accept`  
+**Authorization:** Student Only
+
+**Path Parameters:**
+- `requestId` (integer) - Friend request ID
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Friend request accepted successfully"
+}
+```
+
+### Reject Friend Request
+
+**Endpoint:** `PUT /api/Friends/requests/{requestId}/reject`  
+**Authorization:** Student Only
+
+**Path Parameters:**
+- `requestId` (integer) - Friend request ID
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Friend request rejected successfully"
+}
+```
+
+### Remove Friend
+
+**Endpoint:** `DELETE /api/Friends/{friendId}`  
+**Authorization:** Student Only
+
+**Path Parameters:**
+- `friendId` (integer) - Friend's student ID
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Friend removed successfully"
+}
+```
+
+## Statistics
+
+### Get User Statistics
+
+**Endpoint:** `GET /api/Statistics/user`  
+**Authorization:** Student or Admin
+
+**Response:** `200 OK`
+```json
+{
+  "email": "string",
+  "fullName": "string",
+  "rank": 0,
+  "matchesPlayed": 0,
+  "winRate": 0.0,
+  "problemsCompleted": 0,
+  "totalScore": 0,
+  "lastActivity": "2024-01-01T00:00:00Z"
+}
+```
+
+### Get Leaderboard
+
+**Endpoint:** `GET /api/Statistics/leaderboard`  
+**Authorization:** Student or Admin
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "rank": 1,
+    "participantEmail": "string",
+    "fullName": "string",
+    "totalScore": 0,
+    "problemsCompleted": 0,
+    "matchesPlayed": 0,
+    "winRate": 0.0,
+    "lastSubmission": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+## SignalR Hubs
+
+### Chat Hub
+
+**URL:** `/chatHub`  
+**Authorization:** Bearer Token Required
+
+#### Hub Methods (Client to Server)
+
+##### Join Conversation
+**Method:** `JoinConversation(string conversationId)`
+
+##### Leave Conversation
+**Method:** `LeaveConversation(string conversationId)`
+
+##### Send Message
+**Method:** `SendMessage(string conversationId, string content)`
+
+#### Hub Events (Server to Client)
+
+##### New Message
+**Event:** `NewMessage`
+```json
+{
+  "messageId": 0,
+  "conversationId": 0,
+  "senderEmail": "string",
+  "senderName": "string",
+  "content": "string",
+  "sentAt": "2024-01-01T00:00:00Z"
+}
+```
+
+### Match Hub
+
+**URL:** `/matchHub`  
+**Authorization:** Bearer Token Required
+
+#### Hub Methods (Client to Server)
+
+##### Join Lobby
 **Method:** `JoinLobby(string lobbyId)`
 
-#### Leave Lobby
+##### Leave Lobby
 **Method:** `LeaveLobby(string lobbyId)`
 
-### Hub Events (Server to Client)
+#### Hub Events (Server to Client)
 
-#### Lobby Updated
+##### Lobby Updated
 **Event:** `LobbyUpdated`
+```json
+{
+  "content": "string"
+}
+```
+
+##### Lobby Created
+**Event:** `LobbyCreated`
+```json
+{
+  "messageId": 0
+}
+```
+
+##### Lobby Deleted
+**Event:** `LobbyDeleted`
+
+##### Match Started
+**Event:** `MatchStarted`
+```json
+{
+  "friendEmail": "string",
+  "friendId": 0
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "conversationId": 0,
+  "type": "Friend",
+  "name": "string",
+  "participantEmails": ["user1@example.com", "user2@example.com"]
+}
+```
+
+## Friends
+
+### Get Friends
+
+**Endpoint:** `GET /api/Friends`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "studentId": 0,
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "isOnline": true
+  }
+]
+```
+
+### Search Students
+
+**Endpoint:** `GET /api/Friends/search`  
+**Authorization:** Student Only
+
+**Query Parameters:**
+- `query` (string, required) - Search term for student name or email
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "studentId": 0,
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "isFriend": false,
+    "hasPendingRequest": false
+  }
+]
+```
+
+### Send Friend Request
+
+**Endpoint:** `POST /api/Friends/request`  
+**Authorization:** Student Only
+
+**Request Body:**
+```json
+{
+  "receiverId": 0
+}
+```
+
+```json
+{
+  "message": "Message content cannot be empty"
+}
+```
+
+```json
+{
+  "message": "Cannot send friend request to yourself"
+}
+```
+
+```json
+{
+  "message": "You can only chat with friends"
+}
+```
+
+### 401 Unauthorized
+```json
+{
+  "requestId": 0,
+  "message": "Friend request sent successfully"
+}
+```
+
+### Get Received Friend Requests
+
+**Endpoint:** `GET /api/Friends/requests/received`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "requestId": 0,
+    "senderId": 0,
+    "senderName": "string",
+    "senderEmail": "string",
+    "sentAt": "2024-01-01T00:00:00Z",
+    "status": "Pending"
+  }
+]
+```
+
+### Get Sent Friend Requests
+
+**Endpoint:** `GET /api/Friends/requests/sent`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "requestId": 0,
+    "receiverId": 0,
+    "receiverName": "string",
+    "receiverEmail": "string",
+    "sentAt": "2024-01-01T00:00:00Z",
+    "status": "Pending"
+  }
+]
+```
+
+### Accept Friend Request
+
+**Endpoint:** `PUT /api/Friends/requests/{requestId}/accept`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Friend request accepted successfully"
+}
+```
+
+### Reject Friend Request
+
+**Endpoint:** `PUT /api/Friends/requests/{requestId}/reject`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Friend request rejected successfully"
+}
+```
+
+### Remove Friend
+
+**Endpoint:** `DELETE /api/Friends/{friendId}`  
+**Authorization:** Student Only
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Friend removed successfully"
+}
+```
+
+## Statistics
+
+### Get User Statistics
+
+**Endpoint:** `GET /api/Statistics/user`  
+**Authorization:** Student or Admin
+
+**Response:** `200 OK`
+```json
+{
+  "rank": 0,
+  "matchesPlayed": 0,
+  "matchesWon": 0,
+  "winRate": 0.0,
+  "totalScore": 0,
+  "averageScore": 0.0,
+  "problemsSolved": 0,
+  "favoriteCategory": "string"
+}
+```
+
+```json
+{
+  "message": "Not a participant in this conversation"
+}
+```
+
+### 404 Not Found
 ```json
 {
   "lobbyId": 0,
@@ -706,8 +1275,13 @@
 }
 ```
 
-#### Lobby Created
-**Event:** `LobbyCreated`
+```json
+{
+  "message": "Friend request not found"
+}
+```
+
+### 413 Payload Too Large
 ```json
 {
   "lobbyId": 0,
@@ -717,10 +1291,8 @@
 }
 ```
 
-#### Lobby Deleted
 **Event:** `LobbyDeleted`
 
-#### Match Started
 **Event:** `MatchStarted`
 ```json
 {
@@ -732,74 +1304,28 @@
 }
 ```
 
-## Authorization Levels
-
-- **Anonymous:** No authentication required
-- **Bearer Token Required:** Valid JWT token required
-- **Student Only:** Student role required
-- **Teacher Only:** Teacher role required
-- **Student or Admin:** Student or Admin role required
-- **Admin Only:** Admin role required
-- **Host Only:** Must be the lobby host
-
-## Error Responses
-
-### 400 Bad Request
+#### Chat Events
+**Event:** `NewMessage`
 ```json
 {
-  "message": "Error description"
-}
-```
-
-### 401 Unauthorized
-```json
-{
-  "message": "Invalid credentials" 
+  "messageId": 0,
+  "conversationId": 0,
+  "senderEmail": "string",
+  "senderName": "string",
+  "content": "string",
+  "sentAt": "2024-01-01T00:00:00Z"
 }
 ```
 
 ```json
 {
-  "message": "Account has been deactivated"
+  "message": "Failed to get user statistics",
+  "error": "[error details]"
 }
 ```
 
 ```json
 {
-  "message": "User not found or not a student"
-}
-```
-
-### 403 Forbidden
-```json
-{
-  "message": "Access denied"
-}
-```
-
-### 404 Not Found
-```json
-{
-  "message": "Resource not found"
-}
-```
-
-### 413 Payload Too Large
-```json
-{
-  "message": "File too large"
-}
-```
-
-```json
-{
-  "message": "Too many rows. Maximum 1000 allowed."
-}
-```
-
-### 500 Internal Server Error
-```json
-{
-  "message": "Internal server error: [details]"
+  "message": "Failed to send message: [details]"
 }
 ```
